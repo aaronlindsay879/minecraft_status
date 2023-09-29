@@ -5,14 +5,10 @@ use axum::response::Html;
 use axum::routing::get;
 use axum::Router;
 use config::Config;
-use gamedig::protocols::minecraft::{JavaResponse, VersionedResponse};
-use gamedig::protocols::types::TimeoutSettings;
-use gamedig::protocols::GenericResponse;
-use gamedig::Game;
+use gamedig::protocols::minecraft::JavaResponse;
 use log::{debug, info, warn, LevelFilter};
 use minijinja::render;
 use std::sync::{Arc, RwLock};
-use std::time::Duration;
 
 const DEFAULT_PORT: u16 = 3000;
 
