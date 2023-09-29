@@ -6,3 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dotenv = "0.15.0"
+gamedig = "0.3.0"
+anyhow = "1.0.75"
+parse_duration = "2.1.1"
+log = "0.4.20"
+simple_logger = "4.2.0"
+rustdns = "0.4.0"
