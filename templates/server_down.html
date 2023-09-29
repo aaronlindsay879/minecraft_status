@@ -1,0 +1,91 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{{ server }} status</title>
+    <meta name="description" content="{{ server }} status">
+
+    <style>
+        html {
+            background-color: #090c10;
+            color: #b1b8c0;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 3rem;
+        }
+
+        p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .main {
+            max-width: 720px;
+            width: 100%;
+            padding-right: .75rem;
+            padding-left: .75rem;
+            margin-right: auto;
+            margin-left: auto;
+            font-family: BlinkMacSystemFont,segoe ui,Roboto,helvetica neue,Arial,noto sans,sans-serif,apple color emoji,segoe ui emoji,segoe ui symbol,noto color emoji;
+        }
+
+        .title-flex {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .err {
+            color: #dc3545;
+        }
+
+        .shadowbox {
+            background-color: #0d1117;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .item {
+            display: block;
+            text-decoration: none;
+            padding: 10px 15px 10px;
+            border-radius: 10px;
+        }
+
+        .button {
+            text-decoration: none;
+            color: #B1B8C0;
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/e24f74878a.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="main">
+        <h1 class="title-flex">
+            <span>{{ server }}</span>
+        </h1>
+
+        <div class="shadowbox">
+            <div class="item">
+                <p>
+                    <i class="fa-solid fa-circle-xmark fa-1x err"></i>
+                    <b>
+                        Offline
+                    </b>
+                </p>
+            </div>
+        </div>
+
+        <footer>
+            <div class="button" onClick="window.location.reload();">Refresh Page</div>
+        </footer>
+    </div>
+    </body>
+</html>

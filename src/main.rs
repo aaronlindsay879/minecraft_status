@@ -1,10 +1,25 @@
 mod config;
 
 use anyhow::Result;
+use axum::response::Html;
+use axum::routing::get;
+use axum::Router;
 use config::Config;
-use log::LevelFilter;
+use gamedig::protocols::minecraft::{JavaResponse, VersionedResponse};
+use gamedig::protocols::types::TimeoutSettings;
+use gamedig::protocols::GenericResponse;
+use gamedig::Game;
+use log::{debug, info, warn, LevelFilter};
+use minijinja::render;
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
 
-fn main() -> Result<()> {
+const DEFAULT_PORT: u16 = 3000;
+
+type Shared<T> = Arc<RwLock<T>>;
+
+#[tokio::main]
+async fn main() -> Result<()> {
     // read env file and init logger with default warn level
     let _ = dotenv::dotenv();
     simple_logger::SimpleLogger::new()
@@ -13,8 +28,67 @@ fn main() -> Result<()> {
         .init()
         .unwrap();
 
+    // create shared server status
+    let status = Arc::new(RwLock::new(None));
+
+    // set up background process to refresh server status
     let config = Config::from_env_vars()?;
-    println!("{config:?}");
+    info!("using config {config:?}");
+
+    let status_clone = status.clone();
+    tokio::task::spawn_blocking(move || {
+        loop {
+            // get status, log and then write
+            let new_status = gamedig::games::mc::query(&config.ip, Some(config.port)).ok();
+            debug!("status:\n{new_status:?}");
+
+            {
+                let mut write = status_clone.write().unwrap();
+                *write = new_status;
+            }
+
+            std::thread::sleep(config.refresh_interval);
+        }
+    });
+
+    // create router
+    let app = Router::new().route("/", get(move || serve_status(status)));
+    // find port to run server on
+    let port = get_port();
+
+    info!("listening on 0.0.0.0:{port}");
+    axum::Server::bind(&format!("0.0.0.0:{port}").parse()?)
+        .serve(app.into_make_service())
+        .await?;
 
     Ok(())
+}
+
+/// Finds port to run server on
+fn get_port() -> u16 {
+    let port_string = std::env::var("PORT");
+
+    match port_string {
+        Ok(port_string) => match port_string.parse() {
+            Ok(port) => port,
+            Err(_) => {
+                warn!("env var `PORT` has invalid value `{port_string}`");
+                DEFAULT_PORT
+            }
+        },
+        _ => DEFAULT_PORT,
+    }
+}
+
+const SERVER_UP_STATUS: &'static str = include_str!("../templates/server_up.html");
+const SERVER_DOWN_STATUS: &'static str = include_str!("../templates/server_down.html");
+async fn serve_status(status: Shared<Option<JavaResponse>>) -> Html<String> {
+    dbg!("hi");
+    let read = (*status.read().unwrap()).clone();
+    let hostname = std::env::var("SERVER").unwrap();
+
+    Html(match read {
+        Some(response) => render!(SERVER_UP_STATUS, status => response, server => hostname),
+        None => render!(SERVER_DOWN_STATUS, server => hostname),
+    })
 }

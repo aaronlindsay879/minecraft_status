@@ -11,14 +11,14 @@ const DEFAULT_REFRESH_INTERVAL: Duration = Duration::from_secs(60);
 const DEFAULT_PORT: u16 = 25565;
 
 /// Stores configuration loaded at program start
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub(crate) struct Config {
     /// How often to refresh data
-    refresh_interval: Duration,
+    pub(crate) refresh_interval: Duration,
     /// Ip to check minecraft status for
-    ip: IpAddr,
+    pub(crate) ip: IpAddr,
     /// Port minecraft server is listening on
-    port: u16,
+    pub(crate) port: u16,
 }
 
 impl Config {
@@ -49,13 +49,13 @@ impl Config {
             let server =
                 std::env::var("SERVER").map_err(|_| anyhow!("env var `SERVER` is missing"))?;
 
-            let port_string = std::env::var("PORT").ok();
+            let port_string = std::env::var("SERVER_PORT").ok();
             // same logic as refresh_interval above
             let port = match port_string {
                 Some(port_string) => match port_string.parse() {
                     Ok(port) => port,
                     Err(_) => {
-                        warn!("env var `PORT` has invalid value `{port_string}`");
+                        warn!("env var `SERVER_PORT` has invalid value `{port_string}`");
                         DEFAULT_PORT
                     }
                 },
