@@ -8,6 +8,7 @@ use config::Config;
 use gamedig::protocols::minecraft::JavaResponse;
 use log::{debug, info, warn, LevelFilter};
 use minijinja::render;
+use std::net::IpAddr;
 use std::sync::{Arc, RwLock};
 
 const DEFAULT_PORT: u16 = 3000;
@@ -32,19 +33,9 @@ async fn main() -> Result<()> {
     info!("using config {config:?}");
 
     let status_clone = status.clone();
-    tokio::task::spawn_blocking(move || {
-        loop {
-            // get status, log and then write
-            let new_status = gamedig::games::mc::query(&config.ip, Some(config.port)).ok();
-            debug!("status:\n{new_status:?}");
-
-            {
-                let mut write = status_clone.write().unwrap();
-                *write = new_status;
-            }
-
-            std::thread::sleep(config.refresh_interval);
-        }
+    tokio::task::spawn_blocking(move || loop {
+        update_status(&status_clone, &config.ip, config.port.clone());
+        std::thread::sleep(config.refresh_interval);
     });
 
     // create router
@@ -76,9 +67,21 @@ fn get_port() -> u16 {
     }
 }
 
-const SERVER_UP_STATUS: &'static str = include_str!("../templates/server_up.html");
-const SERVER_DOWN_STATUS: &'static str = include_str!("../templates/server_down.html");
+/// Updates a status with result from given ip/port
+fn update_status(status: &Shared<Option<JavaResponse>>, ip: &IpAddr, port: u16) {
+    // get status, log and then write
+    let new_status = gamedig::games::mc::query(ip, Some(port)).ok();
+    debug!("status:\n{new_status:?}");
+
+    let mut write = status.write().unwrap();
+    *write = new_status;
+}
+
+/// Serves the status, returning a different page depending on if the server is up (Some) or down (None)
 async fn serve_status(status: Shared<Option<JavaResponse>>) -> Html<String> {
+    const SERVER_UP_STATUS: &'static str = include_str!("../templates/server_up.html");
+    const SERVER_DOWN_STATUS: &'static str = include_str!("../templates/server_down.html");
+
     let read = (*status.read().unwrap()).clone();
     let hostname = std::env::var("SERVER").unwrap();
 

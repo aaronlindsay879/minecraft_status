@@ -11,7 +11,7 @@ const DEFAULT_REFRESH_INTERVAL: Duration = Duration::from_secs(60);
 const DEFAULT_PORT: u16 = 25565;
 
 /// Stores configuration loaded at program start
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub(crate) struct Config {
     /// How often to refresh data
     pub(crate) refresh_interval: Duration,
@@ -154,4 +154,43 @@ fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
     }
 
     domain_lookup_inner(&socket, domain, port)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config() {
+        let _ = dotenvy::dotenv();
+        let config = Config::from_env_vars();
+
+        let ip = std::env::var("TEST_IP").unwrap().parse().unwrap();
+        let port = std::env::var("TEST_PORT").unwrap().parse().unwrap();
+
+        assert!(config.is_ok());
+        assert_eq!(
+            config.unwrap(),
+            Config {
+                refresh_interval: Duration::from_secs(30),
+                ip,
+                port,
+            }
+        );
+    }
+
+    #[test]
+    fn test_domain_lookup() {
+        let _ = dotenvy::dotenv();
+
+        let url = std::env::var("TEST_URL").unwrap();
+
+        let ip = std::env::var("TEST_IP").unwrap().parse().unwrap();
+        let port = std::env::var("TEST_PORT").unwrap().parse().unwrap();
+
+        let result = domain_lookup(&url, DEFAULT_PORT);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), (ip, port));
+    }
 }
