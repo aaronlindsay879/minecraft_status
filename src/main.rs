@@ -5,6 +5,7 @@ use axum::response::Html;
 use axum::routing::get;
 use axum::Router;
 use config::Config;
+use gamedig::games::mc;
 use gamedig::protocols::minecraft::JavaResponse;
 use log::{debug, info, warn, LevelFilter};
 use minijinja::render;
@@ -69,8 +70,16 @@ fn get_port() -> u16 {
 
 /// Updates a status with result from given ip/port
 fn update_status(status: &Shared<Option<JavaResponse>>, ip: &IpAddr, port: u16) {
-    // get status, log and then write
-    let new_status = gamedig::games::mc::query(ip, Some(port)).ok();
+    // get new status, trying java and then bedrock
+    let new_status = if let Ok(response) = mc::query_java(ip, Some(port.clone())) {
+        Some(response)
+    } else if let Ok(response) = mc::query_bedrock(ip, Some(port)) {
+        Some(JavaResponse::from_bedrock_response(response))
+    } else {
+        None
+    };
+
+    // then log and write to shared status
     debug!("status:\n{new_status:?}");
 
     let mut write = status.write().unwrap();

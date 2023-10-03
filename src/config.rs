@@ -143,7 +143,7 @@ fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
             return Err(anyhow!("no valid records"));
         };
 
-        // if srv record exist, check if we've reached an ip
+        // if record exists, check if we've reached an ip
         if let Ok(ip) = IpAddr::from_str(&ip) {
             // we've reached the end of the trail!
             Ok((ip, port))
