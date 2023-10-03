@@ -83,7 +83,13 @@ async fn serve_status(status: Shared<Option<JavaResponse>>) -> Html<String> {
     let hostname = std::env::var("SERVER").unwrap();
 
     Html(match read {
-        Some(response) => render!(SERVER_UP_STATUS, status => response, server => hostname),
-        None => render!(SERVER_DOWN_STATUS, server => hostname),
+        Some(response) => {
+            info!("serving up status");
+            render!(SERVER_UP_STATUS, status => response, server => hostname)
+        }
+        None => {
+            info!("serving down status");
+            render!(SERVER_DOWN_STATUS, server => hostname)
+        }
     })
 }

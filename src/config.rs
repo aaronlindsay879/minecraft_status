@@ -95,6 +95,8 @@ macro_rules! find_record {
         let mut message = Message::default();
         message_question!(message, $domain => $record_type);
 
+        debug!("checking {} for {} record", $domain, stringify!($record_type));
+
         // send over socket
         let question = message.to_vec()?;
         $socket.send(&question)?;
@@ -146,7 +148,7 @@ fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
             // we've reached the end of the trail!
             Ok((ip, port))
         } else {
-            debug!("continuing search for {ip}");
+            info!("continuing search for {ip}");
             domain_lookup_inner(socket, &ip, port)
         }
     }
