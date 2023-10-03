@@ -17,7 +17,7 @@ type Shared<T> = Arc<RwLock<T>>;
 #[tokio::main]
 async fn main() -> Result<()> {
     // read env file and init logger with default warn level
-    let _ = dotenv::dotenv();
+    let _ = dotenvy::dotenv();
     simple_logger::SimpleLogger::new()
         .with_level(LevelFilter::Warn)
         .env()
