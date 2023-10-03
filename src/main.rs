@@ -79,7 +79,6 @@ fn get_port() -> u16 {
 const SERVER_UP_STATUS: &'static str = include_str!("../templates/server_up.html");
 const SERVER_DOWN_STATUS: &'static str = include_str!("../templates/server_down.html");
 async fn serve_status(status: Shared<Option<JavaResponse>>) -> Html<String> {
-    dbg!("hi");
     let read = (*status.read().unwrap()).clone();
     let hostname = std::env::var("SERVER").unwrap();
 
