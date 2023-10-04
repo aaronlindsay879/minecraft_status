@@ -1,3 +1,4 @@
+use log::info;
 use std::net::IpAddr;
 
 pub(crate) fn find_servers() -> Option<Vec<IpAddr>> {
