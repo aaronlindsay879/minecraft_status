@@ -33,7 +33,7 @@ jobs:
         id: get_release
         uses: bruceadams/get-release@v1.2.2
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get executable
         id: get_executable
@@ -42,7 +42,7 @@ jobs:
       - name: Upload release binary
         uses: actions/upload-release-asset@v1.0.2
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./target/${{ matrix.rust_target }}/release/${{ steps.get_executable.outputs.EXECUTABLE }}
