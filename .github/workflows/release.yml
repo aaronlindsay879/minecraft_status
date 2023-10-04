@@ -1,3 +1,5 @@
+name: release artifacts
+
 on:
   release:
     types: [created]
