@@ -92,6 +92,7 @@ fn domain_lookup_individual(domain: &str, port: u16, dns_server: IpAddr) -> Resu
 pub fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
     crate::DNS_SERVERS
         .iter()
+        .chain(["1.1.1.1".parse().unwrap(), "1.0.0.1".parse().unwrap()].iter())
         .filter_map(|dns_server| {
             info!("checking with DNS server {dns_server}");
             domain_lookup_individual(domain, port, *dns_server).ok()
