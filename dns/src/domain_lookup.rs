@@ -90,11 +90,11 @@ fn domain_lookup_individual(domain: &str, port: u16, dns_server: IpAddr) -> Resu
 
 /// looks up ip address for a given domain and port, checking SRV, CNAME and A records (in that order)
 pub fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
-    crate::dns_servers()
-        .into_iter()
+    crate::DNS_SERVERS
+        .iter()
         .filter_map(|dns_server| {
             info!("checking with DNS server {dns_server}");
-            domain_lookup_individual(domain, port, dns_server).ok()
+            domain_lookup_individual(domain, port, *dns_server).ok()
         })
         .next()
         .ok_or(anyhow!("no valid records on any DNS servers"))
