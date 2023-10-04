@@ -1,0 +1,48 @@
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: Rust project
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rust_target:
+          - x86_64-pc-windows-gnu
+          - x86_64-unknown-linux-gnu
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.rust_target }}
+
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --all-features --target ${{ matrix.rust_target }}
+
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get executable
+        id: get_executable
+        run: echo "::set-output name=EXECUTABLE::$(basename $(find target/${{ matrix.rust_target }}/release/ -maxdepth 1 -type f -executable -print0))"
+
+      - name: Upload release binary
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./target/${{ matrix.rust_target }}/release/${{ steps.get_executable.outputs.EXECUTABLE }}
+          asset_name: ${{ steps.get_executable.outputs.EXECUTABLE }}
+          asset_content_type: application/octet-stream
