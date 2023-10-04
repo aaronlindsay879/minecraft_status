@@ -285,15 +285,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dns"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "log",
- "rustdns",
-]
-
-[[package]]
 name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -723,12 +714,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
- "dns",
  "dotenvy",
  "gamedig",
  "log",
  "minijinja",
  "parse_duration",
+ "rustdns",
  "simple_logger",
  "tokio",
 ]
