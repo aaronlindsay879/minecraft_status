@@ -26,3 +26,16 @@ pub fn dns_servers() -> Vec<IpAddr> {
         default_servers
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_servers() {
+        let servers = find_servers();
+
+        dbg!(&servers);
+        assert!(servers.is_some());
+    }
+}
