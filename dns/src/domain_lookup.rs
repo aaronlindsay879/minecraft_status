@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use log::{debug, info};
 use rustdns::{Class, Message, Resource, Type};
-use std::net::{IpAddr, UdpSocket};
+use std::net::{IpAddr, SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -49,11 +49,12 @@ macro_rules! find_record {
 }
 
 /// looks up ip address for a given domain and port, checking SRV, CNAME and A records (in that order)
-pub fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
+/// using a single provided dns server
+fn domain_lookup_individual(domain: &str, port: u16, dns_server: IpAddr) -> Result<(IpAddr, u16)> {
     // first create a socket for dns requests
     let socket = UdpSocket::bind("0.0.0.0:0")?;
     socket.set_read_timeout(Some(Duration::new(5, 0)))?;
-    socket.connect("8.8.8.8:53")?; // google's dns servers
+    socket.connect(SocketAddr::new(dns_server, 53))?;
 
     // inner method to help with recursive search
     fn domain_lookup_inner(socket: &UdpSocket, domain: &str, port: u16) -> Result<(IpAddr, u16)> {
@@ -85,4 +86,16 @@ pub fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
     }
 
     domain_lookup_inner(&socket, domain, port)
+}
+
+/// looks up ip address for a given domain and port, checking SRV, CNAME and A records (in that order)
+pub fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
+    crate::dns_servers()
+        .into_iter()
+        .filter_map(|dns_server| {
+            info!("checking with DNS server {dns_server}");
+            domain_lookup_individual(domain, port, dns_server).ok()
+        })
+        .next()
+        .ok_or(anyhow!("no valid records on any DNS servers"))
 }
