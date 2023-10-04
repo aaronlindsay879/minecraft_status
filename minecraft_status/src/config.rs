@@ -104,18 +104,15 @@ mod tests {
         let _ = dotenvy::dotenv();
         let config = Config::from_env_vars();
 
+        let server = std::env::var("TEST_URL").unwrap();
         let ip = std::env::var("TEST_IP").unwrap().parse().unwrap();
         let port = std::env::var("TEST_PORT").unwrap().parse().unwrap();
 
         assert!(config.is_ok());
-        assert_eq!(
-            config.unwrap(),
-            Config {
-                refresh_interval: Duration::from_secs(30),
-                ip,
-                port,
-            }
-        );
+
+        let config = config.unwrap();
+        assert_eq!(config.refresh_interval, Duration::from_secs(30));
+        assert!(config.servers.contains(&Server { server, ip, port }));
     }
 
     #[test]
