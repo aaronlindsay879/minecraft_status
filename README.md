@@ -1,16 +1,17 @@
 # minecraft_status
-Simple webserver to query and display the status of a given minecraft server.
+Simple webserver to query and display the status of one or more given minecraft servers. Shows status of all servers on main page, and individual statuses on
+paths given by the server ip - such as `status.docker.localhost/your.server.ip`
 
 ![image demo](docs/img.png)
 
 ## Env vars
 
-| env var          | description                                                                   | default |
-|------------------|-------------------------------------------------------------------------------|---------|
-| RUST_LOG         | sets logging level                                                            | WARN    |
-| PORT             | port for server to listen on                                                  | 3000    |
-| SERVER           | server ip/url to check, in format [ip/url]:[port] (where :[port] is optional) |         |
-| REFRESH_INTERVAL | how often to check server status                                              | 60s     |
+| env var          | description                                                                                                                     | default | example                          |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------|---------|----------------------------------|
+| RUST_LOG         | sets logging level                                                                                                              | WARN    | DEBUG                            |
+| PORT             | port for server to listen on                                                                                                    | 3000    | 80                               |
+| SERVER           | server ip/url to check, in format [ip/url]:[port] (where :[port] is optional). multiple can be passed by separating with commas |         | your.server,your.other.server:40 |
+| REFRESH_INTERVAL | how often to check server status                                                                                                | 60s     | 5m                               |
 
 ## Usage with docker compose 
 ```yaml

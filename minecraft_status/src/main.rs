@@ -51,13 +51,25 @@ async fn main() -> Result<()> {
     }
 
     // create router
-    let app = Router::new().route("/", get(move || serve_status(status)));
+    let router_status = status.clone();
+    let mut router = Router::new().route("/", get(move || serve_all_status(router_status)));
+
+    // then add routes for each server
+    for server in config.servers.clone() {
+        let status = status.clone();
+
+        router = router.route(
+            &format!("/{}", server.server),
+            get(move || serve_single_status(server.clone().server, status)),
+        )
+    }
+
     // find port to run server on
     let port = get_port();
 
     info!("listening on 0.0.0.0:{port}");
     axum::Server::bind(&format!("0.0.0.0:{port}").parse()?)
-        .serve(app.into_make_service())
+        .serve(router.into_make_service())
         .await?;
 
     Ok(())
@@ -99,26 +111,21 @@ fn update_status(status: &Status, server: &Server) {
         .insert(server.server.clone(), new_status);
 }
 
-/// Serves the status, returning a different page depending on if the server is up (Some) or down (None)
-async fn serve_status(status: Status) -> Html<String> {
-    const SERVER_UP_STATUS: &'static str = include_str!("../templates/server_up.html");
-    const SERVER_DOWN_STATUS: &'static str = include_str!("../templates/server_down.html");
+/// Serves the status of all servers
+async fn serve_all_status(status: Status) -> Html<String> {
+    const SERVE_ALL_STATUS: &'static str = include_str!("../templates/all.html");
 
     let read = (*status.read().unwrap()).clone();
 
-    // temp hack, just show first server
-    Html(match read.iter().next() {
-        Some((hostname, Some(response))) => {
-            info!("serving up status");
-            render!(SERVER_UP_STATUS, status => response, server => hostname)
-        }
-        Some((hostname, None)) => {
-            info!("serving down status");
-            render!(SERVER_DOWN_STATUS, server => hostname)
-        }
-        _ => {
-            warn!("unknown status");
-            render!(SERVER_DOWN_STATUS, server => "")
-        }
-    })
+    Html(render!(SERVE_ALL_STATUS, statuses => read))
+}
+
+/// Serves the status of a single server
+async fn serve_single_status(server: String, status: Status) -> Html<String> {
+    const SERVE_SINGLE_STATUS: &'static str = include_str!("../templates/single.html");
+
+    let read = status.read().unwrap();
+    let response = read.get(&server).unwrap();
+
+    Html(render!(SERVE_SINGLE_STATUS, server => server, status => response))
 }

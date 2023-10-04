@@ -25,6 +25,23 @@
             margin-bottom: 5px;
         }
 
+        h1 {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        hr {
+            color: #2f3133;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a:link, a:visited {
+            color: inherit;
+        }
+
         .main {
             max-width: 720px;
             width: 100%;
@@ -45,10 +62,15 @@
             color: #5cdd8b;
         }
 
+        .err {
+            color: #dc3545;
+        }
+
         .shadowbox {
             background-color: #0d1117;
             padding: 10px;
             border-radius: 10px;
+            margin-bottom: 20px;
         }
 
         .item {
@@ -59,7 +81,6 @@
         }
 
         .button {
-            text-decoration: none;
             color: #B1B8C0;
         }
     </style>
@@ -68,24 +89,42 @@
 
 <body>
     <div class="main">
-        <h1 class="title-flex">
-            <img src="{{ status.favicon }}" alt="server image" />
-            <span>{{ server }}</span>
-        </h1>
+        {% for server, status in statuses|items %}
+            <a href="{{ server }}">
+                <h1 class="title-flex">
+                    <img src="{{ status.favicon }}" alt="" />
+                    <span>{{ server }}</span>
+                </h1>
+            </a>
 
-        <div class="shadowbox">
-            <div class="item">
-                <p>
-                    <i class="fa-solid fa-circle-check fa-1x ok"></i>
-                    <b>
-                        Online
-                    </b>
-                </p>
-                <p>
-                    {{ status.players_online }} / {{ status.players_maximum }} players
-                </p>
+            <div class="shadowbox">
+                <div class="item">
+                    {% if status is not none %}
+                        <p>
+                            <i class="fa-solid fa-circle-check fa-1x ok"></i>
+                            <b>
+                                Online
+                            </b>
+                        </p>
+                        <p>
+                            {{ status.players_online }} / {{ status.players_maximum }} players
+                        </p>
+                    {% else %}
+                        <p>
+                            <i class="fa-solid fa-circle-xmark fa-1x err"></i>
+                            <b>
+                                Offline
+                            </b>
+                        </p>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+
+
+            {% if not loop.last %}
+            <hr>
+            {% endif %}
+        {% endfor %}
 
         <footer>
             <div class="button" onClick="window.location.reload();">Refresh Page</div>
