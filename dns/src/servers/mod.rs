@@ -8,7 +8,7 @@ cfg_if! {
         use unix::find_servers;
     } else if #[cfg(windows)] {
         mod windows;
-        use windows::find_servers;
+        use self::windows::find_servers;
     } else {
         fn find_servers() -> Option<Vec<IpAddr>> {
             info!("no supported method for getting dns servers on this platform");
