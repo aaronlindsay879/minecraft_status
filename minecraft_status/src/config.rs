@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use dns::domain_lookup;
-use log::warn;
+use log::{debug, warn};
 use std::net::IpAddr;
 use std::time::Duration;
 
@@ -44,22 +44,24 @@ impl Config {
         };
 
         let (ip, port) = {
-            // get server and port from env vars
+            // get server from env var
             let server =
                 std::env::var("SERVER").map_err(|_| anyhow!("env var `SERVER` is missing"))?;
 
-            let port_string = std::env::var("SERVER_PORT").ok();
-            // same logic as refresh_interval above
-            let port = match port_string {
-                Some(port_string) => match port_string.parse() {
-                    Ok(port) => port,
-                    Err(_) => {
-                        warn!("env var `SERVER_PORT` has invalid value `{port_string}`");
-                        DEFAULT_PORT
+            // if string contains :, try and parse whatever follows it as a port
+            // use DEFAULT_PORT if invalid or no port provided
+            let (server, port) = match server.split_once(':') {
+                Some((server, port)) => match port.parse() {
+                    Ok(port) => (server.to_string(), port),
+                    _ => {
+                        warn!("env var `SERVER` has invalid port `{port}`");
+                        (server.to_string(), DEFAULT_PORT)
                     }
                 },
-                _ => DEFAULT_PORT,
+                None => (server, DEFAULT_PORT),
             };
+
+            debug!("using server `{server}` with port `{port}`");
 
             // then perform a lookup to find ip to use
             domain_lookup(&server, port)?
