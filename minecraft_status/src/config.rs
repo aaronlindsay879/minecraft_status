@@ -10,14 +10,12 @@ const DEFAULT_REFRESH_INTERVAL: Duration = Duration::from_secs(60);
 const DEFAULT_PORT: u16 = 25565;
 
 /// Stores configuration loaded at program start
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Config {
     /// How often to refresh data
     pub(crate) refresh_interval: Duration,
-    /// Ip to check minecraft status for
-    pub(crate) ip: IpAddr,
-    /// Port minecraft server is listening on
-    pub(crate) port: u16,
+    /// Servers to check
+    pub(crate) servers: Vec<Server>,
 }
 
 impl Config {
@@ -43,32 +41,54 @@ impl Config {
             }
         };
 
-        let (ip, port) = {
-            // get server from env var
-            let server =
-                std::env::var("SERVER").map_err(|_| anyhow!("env var `SERVER` is missing"))?;
+        let server = std::env::var("SERVER").map_err(|_| anyhow!("env var `SERVER` is missing"))?;
 
-            // if string contains :, try and parse whatever follows it as a port
-            // use DEFAULT_PORT if invalid or no port provided
-            let (server, port) = match server.split_once(':') {
-                Some((server, port)) => match port.parse() {
-                    Ok(port) => (server.to_string(), port),
-                    _ => {
-                        warn!("env var `SERVER` has invalid port `{port}`");
-                        (server.to_string(), DEFAULT_PORT)
-                    }
-                },
-                None => (server, DEFAULT_PORT),
-            };
-
-            debug!("using server `{server}` with port `{port}`");
-
-            // then perform a lookup to find ip to use
-            domain_lookup(&server, port)?
-        };
+        let servers = server
+            .split(",")
+            .map(Server::parse)
+            .collect::<Result<Vec<_>>>()?;
 
         Ok(Self {
             refresh_interval,
+            servers,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Server {
+    /// Initial server ip/domain passed
+    pub(crate) server: String,
+    /// Ip to check minecraft status for
+    pub(crate) ip: IpAddr,
+    /// Port minecraft server is listening on
+    pub(crate) port: u16,
+}
+
+impl Server {
+    pub fn parse(server_port: &str) -> Result<Self> {
+        // if string contains :, try and parse whatever follows it as a port
+        // use DEFAULT_PORT if invalid or no port provided
+        let (server, port) = match server_port.split_once(':') {
+            Some((server, port)) => match port.parse() {
+                Ok(port) => (server, port),
+                _ => {
+                    warn!("env var `SERVER` has invalid port `{port}`");
+                    (server, DEFAULT_PORT)
+                }
+            },
+            None => (server_port, DEFAULT_PORT),
+        };
+
+        debug!("searching for server `{server}` with port `{port}`");
+
+        // then perform a lookup to find ip to use
+        let (ip, port) = domain_lookup(server, port)?;
+
+        debug!("adding ip `{ip}` with port `{port}`");
+
+        Ok(Self {
+            server: server_port.to_string(),
             ip,
             port,
         })
