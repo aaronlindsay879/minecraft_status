@@ -16,7 +16,11 @@ pub(super) struct AdapterInfo {
 }
 
 impl AdapterInfo {
-    /// Reads dns servers for adapter by traversing the linked list
+    /// Reads dns servers for adapter by traversing the linked list in [IP_ADAPTER_DNS_SERVER_ADDRESS_XP]
+    ///
+    /// # SAFETY
+    /// * ptr is checked to not be null
+    /// * caller must ensure ptr is only gotten from a successful GetAdaptersAddresses call
     unsafe fn read_dns_servers(
         mut ptr: *const IP_ADAPTER_DNS_SERVER_ADDRESS_XP,
     ) -> Option<Vec<IpAddr>> {
@@ -32,17 +36,14 @@ impl AdapterInfo {
                 AF_INET => {
                     // if ipv4
                     let address = *(address as *mut SOCKADDR_IN);
-                    // swap from BE to LE
-                    let address = address.sin_addr.S_un.S_addr.swap_bytes();
+                    let address = u32::from_be(address.sin_addr.S_un.S_addr);
 
                     IpAddr::from(Ipv4Addr::from(address))
                 }
                 AF_INET6 => {
                     // if ipv6
                     let address = *(address as *mut SOCKADDR_IN6);
-                    // swap from BE to LE
-                    let mut address = address.sin6_addr.u.Byte;
-                    address.reverse();
+                    let address = u128::from_be_bytes(address.sin6_addr.u.Byte);
 
                     IpAddr::from(Ipv6Addr::from(address))
                 }
@@ -63,9 +64,12 @@ impl AdapterInfo {
         Some(servers)
     }
 
-    unsafe fn new(ptr: *const IP_ADAPTER_ADDRESSES_LH) -> Option<Self> {
-        let dns_servers = {
-            let dns_ptr = (*ptr).FirstDnsServerAddress;
+    /// Fetches information for a single adapter using the information provided
+    fn new(adapter: &IP_ADAPTER_ADDRESSES_LH) -> Option<Self> {
+        // SAFETY: adapter is a normal rust type and thus should have been created correctly
+        // meaning pointers inside are valid
+        let dns_servers = unsafe {
+            let dns_ptr = adapter.FirstDnsServerAddress;
             Self::read_dns_servers(dns_ptr)
         }?;
 
@@ -136,16 +140,16 @@ impl AdapterInfoList {
         let mut adapters = Vec::new();
 
         while !ptr.is_null() {
-            // SAFETY: we ensured GetAdaptersAddresses was a success, so each pointer will be valid unless something
-            // out of our control breaks
-            unsafe {
-                match AdapterInfo::new(ptr) {
-                    Some(adapter) => adapters.push(adapter),
-                    _ => warn!("invalid adapter found"),
-                }
+            // SAFETY: we ensured pointer is not null and GetAdaptersAddresses was a success,
+            // so pointer *should* be valid
+            let adapter = unsafe { *ptr };
 
-                ptr = (*ptr).Next;
+            match AdapterInfo::new(&adapter) {
+                Some(adapter) => adapters.push(adapter),
+                _ => warn!("invalid adapter found"),
             }
+
+            ptr = adapter.Next;
         }
 
         Some(Self { adapters })

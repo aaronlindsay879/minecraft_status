@@ -7,7 +7,9 @@ cfg_if! {
         mod unix;
         use unix::find_servers;
     } else if #[cfg(windows)] {
+        #[allow(unsafe_code)]
         mod windows;
+
         use self::windows::find_servers;
     } else {
         fn find_servers() -> Option<Vec<IpAddr>> {

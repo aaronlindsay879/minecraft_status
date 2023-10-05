@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 mod config;
 
 use crate::config::Server;

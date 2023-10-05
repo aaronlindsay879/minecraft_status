@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 mod domain_lookup;
 mod servers;
 

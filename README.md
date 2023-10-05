@@ -1,8 +1,12 @@
 # minecraft_status
-Simple webserver to query and display the status of one or more given minecraft servers. Shows status of all servers on main page, and individual statuses on
-paths given by the server ip - such as `status.docker.localhost/your.server.ip`
+Simple webserver to query and display the status of one or more given minecraft servers. 
+Shows status of all servers on main page, and individual statuses on paths given by the server ip - such as `status.docker.localhost/your.server.ip`
 
 ![image demo](docs/img.png)
+
+## Unsafe code usage
+Unsafe code is denied in both the `dns` and `minecraft_status` crates, with an exception for finding DNS servers on windows as that relies on calling [GetAdaptersAddresses](https://learn.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses) and processing the resulting [IP_ADAPTER_ADDRESSES_LH](https://learn.microsoft.com/en-us/windows/win32/api/iptypes/ns-iptypes-ip_adapter_addresses_lh).
+
 
 ## Env vars
 
