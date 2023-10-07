@@ -8,8 +8,8 @@ use axum::response::Html;
 use axum::routing::get;
 use axum::Router;
 use config::Config;
-use gamedig::games::mc;
-use gamedig::protocols::minecraft::JavaResponse;
+use gamedig::games::minecraft;
+use gamedig::protocols::minecraft::{JavaResponse, RequestSettings};
 use log::{debug, info, warn, LevelFilter};
 use minijinja::render;
 use std::collections::HashMap;
@@ -95,10 +95,15 @@ fn get_port() -> u16 {
 
 /// Updates a status with result from given server
 fn update_status(status: &Status, server: &Server) {
+    let java_request_settings = RequestSettings {
+        hostname: server.server.clone(),
+        protocol_version: -1, // query for any minecraft java versions
+    };
+
     // get new status, trying java and then bedrock
-    let new_status = if let Ok(response) = mc::query_java(&server.ip, Some(server.port)) {
+    let new_status = if let Ok(response) = minecraft::query_java(&server.ip, Some(server.port), Some(java_request_settings)) {
         Some(response)
-    } else if let Ok(response) = mc::query_bedrock(&server.ip, Some(server.port)) {
+    } else if let Ok(response) = minecraft::query_bedrock(&server.ip, Some(server.port)) {
         Some(JavaResponse::from_bedrock_response(response))
     } else {
         None
