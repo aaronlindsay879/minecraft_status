@@ -12,6 +12,11 @@ use windows::Win32::Networking::WinSock::{
 /// Stores information about a single network adapter, analogous to a stripped-down
 /// [IP_ADAPTER_ADDRESSES_LH](https://learn.microsoft.com/en-us/windows/win32/api/iptypes/ns-iptypes-ip_adapter_addresses_lh)
 pub(super) struct AdapterInfo {
+    /// Represents how good of a choice this adapter is for ipv4
+    pub(super) ipv4_metric: u32,
+    /// Represents how good of a choice this adapter is for ipv6
+    pub(super) ipv6_metric: u32,
+    /// List of dns servers for this adapter
     pub(super) dns_servers: Vec<IpAddr>,
 }
 
@@ -73,7 +78,11 @@ impl AdapterInfo {
             Self::read_dns_servers(dns_ptr)
         }?;
 
-        Some(Self { dns_servers })
+        Some(Self {
+            dns_servers,
+            ipv4_metric: adapter.Ipv4Metric,
+            ipv6_metric: adapter.Ipv6Metric,
+        })
     }
 }
 
@@ -151,6 +160,9 @@ impl AdapterInfoList {
 
             ptr = adapter.Next;
         }
+
+        // and then finally sort by min of ipv4 and ipv6 metric (useful for choosing best dns servers)
+        adapters.sort_unstable_by_key(|adapter| adapter.ipv4_metric.min(adapter.ipv6_metric));
 
         Some(Self { adapters })
     }
