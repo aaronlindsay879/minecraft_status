@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use dns::domain_lookup;
 use log::{debug, warn};
 use std::net::IpAddr;
+use std::str::FromStr;
 use std::time::Duration;
 
 /// Default refresh interval (60 seconds)
@@ -66,10 +67,10 @@ pub(crate) struct Server {
 }
 
 impl Server {
-    pub fn parse(server_port: &str) -> Result<Self> {
+    pub fn parse(server_and_port: &str) -> Result<Self> {
         // if string contains :, try and parse whatever follows it as a port
         // use DEFAULT_PORT if invalid or no port provided
-        let (server, port) = match server_port.split_once(':') {
+        let (server, port) = match server_and_port.split_once(':') {
             Some((server, port)) => match port.parse() {
                 Ok(port) => (server, port),
                 _ => {
@@ -77,18 +78,26 @@ impl Server {
                     (server, DEFAULT_PORT)
                 }
             },
-            None => (server_port, DEFAULT_PORT),
+            None => (server_and_port, DEFAULT_PORT),
         };
 
-        debug!("searching for server `{server}` with port `{port}`");
-
-        // then perform a lookup to find ip to use
-        let (ip, port) = domain_lookup(server, port)?;
+        // if server is just an ip address, use directly
+        // otherwise perform dns lookup
+        let (ip, port) = match IpAddr::from_str(server) {
+            Ok(ip) => {
+                debug!("skipping dns look for {server}");
+                (ip, port)
+            }
+            _ => {
+                debug!("searching for server `{server}` with port `{port}`");
+                domain_lookup(server, port)?
+            }
+        };
 
         debug!("adding ip `{ip}` with port `{port}`");
 
         Ok(Self {
-            server: server_port.to_string(),
+            server: server_and_port.to_string(),
             ip,
             port,
         })
