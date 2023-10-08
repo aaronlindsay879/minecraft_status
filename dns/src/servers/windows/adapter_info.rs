@@ -162,9 +162,7 @@ impl AdapterInfoList {
         }
 
         // and then finally sort by min of ipv4 and ipv6 metric (useful for choosing best dns servers)
-        // lower metric = better, so reverse afterwards
         adapters.sort_unstable_by_key(|adapter| adapter.ipv4_metric.min(adapter.ipv6_metric));
-        adapters.reverse();
 
         Some(Self { adapters })
     }
