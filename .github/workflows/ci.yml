@@ -21,4 +21,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ format('svvqqrdoiofnohfchkjcdgoixnnsta/minecraft_status:{0}', github.ref_name) }} svvqqrdoiofnohfchkjcdgoixnnsta/minecraft_status:latest
+          tags: |
+            ${{ format('svvqqrdoiofnohfchkjcdgoixnnsta/minecraft_status:{0}', github.ref_name) }} 
+            svvqqrdoiofnohfchkjcdgoixnnsta/minecraft_status:latest
