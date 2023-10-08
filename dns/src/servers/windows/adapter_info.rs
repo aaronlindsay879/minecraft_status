@@ -1,4 +1,4 @@
-use log::warn;
+use log::{debug, warn};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use windows::Win32::Foundation::{ERROR_BUFFER_OVERFLOW, ERROR_SUCCESS};
 use windows::Win32::NetworkManagement::IpHelper::{
@@ -11,6 +11,7 @@ use windows::Win32::Networking::WinSock::{
 
 /// Stores information about a single network adapter, analogous to a stripped-down
 /// [IP_ADAPTER_ADDRESSES_LH](https://learn.microsoft.com/en-us/windows/win32/api/iptypes/ns-iptypes-ip_adapter_addresses_lh)
+#[derive(Debug)]
 pub(super) struct AdapterInfo {
     /// Represents how good of a choice this adapter is for ipv4
     pub(super) ipv4_metric: u32,
@@ -87,6 +88,7 @@ impl AdapterInfo {
 }
 
 /// Stores information about all network adapters in a system
+#[derive(Debug)]
 pub(super) struct AdapterInfoList {
     pub adapters: Vec<AdapterInfo>,
 }
@@ -151,10 +153,18 @@ impl AdapterInfoList {
         while !ptr.is_null() {
             // SAFETY: we ensured pointer is not null and GetAdaptersAddresses was a success,
             // so pointer *should* be valid
-            let adapter = unsafe { *ptr };
+            let adapter = unsafe {
+                let adapter = *ptr;
+                debug!("reading adapter `{}`", adapter.FriendlyName.display());
+
+                adapter
+            };
 
             match AdapterInfo::new(&adapter) {
-                Some(adapter) => adapters.push(adapter),
+                Some(adapter) => {
+                    debug!("adding adapter:\n\t{adapter:?}");
+                    adapters.push(adapter)
+                }
                 _ => warn!("invalid adapter found"),
             }
 

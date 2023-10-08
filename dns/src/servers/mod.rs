@@ -1,5 +1,6 @@
 use cfg_if::cfg_if;
 use lazy_static::lazy_static;
+use log::debug;
 use std::net::IpAddr;
 
 cfg_if! {
@@ -20,7 +21,12 @@ cfg_if! {
 }
 
 lazy_static! {
-    pub static ref DNS_SERVERS: Vec<IpAddr> = find_servers().unwrap_or_default();
+    pub static ref DNS_SERVERS: Vec<IpAddr> = {
+        let servers = find_servers().unwrap_or_default();
+        debug!("using dns servers:\n{servers:#?}");
+
+        servers
+    };
 }
 
 #[cfg(test)]
