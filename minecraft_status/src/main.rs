@@ -1,19 +1,21 @@
-#![deny(unsafe_code)]
+//#![deny(unsafe_code)]
 
 mod config;
 
 use crate::config::Server;
 use anyhow::Result;
-use axum::response::Html;
-use axum::routing::get;
-use axum::Router;
+use axum::{response::Html, routing::get, Router};
 use config::Config;
-use gamedig::games::minecraft;
-use gamedig::protocols::minecraft::{JavaResponse, RequestSettings};
+use gamedig::{
+    games::minecraft,
+    protocols::minecraft::{JavaResponse, RequestSettings},
+};
 use log::{debug, info, warn, LevelFilter};
 use minijinja::render;
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 const DEFAULT_PORT: u16 = 3000;
 
@@ -101,7 +103,9 @@ fn update_status(status: &Status, server: &Server) {
     };
 
     // get new status, trying java and then bedrock
-    let new_status = if let Ok(response) = minecraft::query_java(&server.ip, Some(server.port), Some(java_request_settings)) {
+    let new_status = if let Ok(response) =
+        minecraft::query_java(&server.ip, Some(server.port), Some(java_request_settings))
+    {
         Some(response)
     } else if let Ok(response) = minecraft::query_bedrock(&server.ip, Some(server.port)) {
         Some(JavaResponse::from_bedrock_response(response))

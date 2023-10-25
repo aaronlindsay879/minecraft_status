@@ -1,9 +1,7 @@
 use anyhow::{anyhow, Result};
 use dns::domain_lookup;
 use log::{debug, warn};
-use std::net::IpAddr;
-use std::str::FromStr;
-use std::time::Duration;
+use std::{net::IpAddr, str::FromStr, time::Duration};
 
 /// Default refresh interval (60 seconds)
 const DEFAULT_REFRESH_INTERVAL: Duration = Duration::from_secs(60);

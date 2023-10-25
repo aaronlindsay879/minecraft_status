@@ -1,12 +1,12 @@
 use log::{debug, warn};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use windows::Win32::Foundation::{ERROR_BUFFER_OVERFLOW, ERROR_SUCCESS};
-use windows::Win32::NetworkManagement::IpHelper::{
-    GetAdaptersAddresses, GAA_FLAG_INCLUDE_PREFIX, IP_ADAPTER_ADDRESSES_LH,
-    IP_ADAPTER_DNS_SERVER_ADDRESS_XP,
-};
-use windows::Win32::Networking::WinSock::{
-    AF_INET, AF_INET6, AF_UNSPEC, SOCKADDR_IN, SOCKADDR_IN6,
+use windows::Win32::{
+    Foundation::{ERROR_BUFFER_OVERFLOW, ERROR_SUCCESS},
+    NetworkManagement::IpHelper::{
+        GetAdaptersAddresses, GAA_FLAG_INCLUDE_PREFIX, IP_ADAPTER_ADDRESSES_LH,
+        IP_ADAPTER_DNS_SERVER_ADDRESS_XP,
+    },
+    Networking::WinSock::{AF_INET, AF_INET6, AF_UNSPEC, SOCKADDR_IN, SOCKADDR_IN6},
 };
 
 /// Stores information about a single network adapter, analogous to a stripped-down

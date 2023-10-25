@@ -1,6 +1,5 @@
 use log::info;
-use std::net::IpAddr;
-use std::str::FromStr;
+use std::{net::IpAddr, str::FromStr};
 
 /// Finds dns server in use by parsing /etc/resolv.conf
 pub(crate) fn find_servers() -> Option<Vec<IpAddr>> {

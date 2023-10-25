@@ -1,9 +1,12 @@
 use anyhow::{anyhow, Result};
+use lazy_static::lazy_static;
 use log::{debug, info};
 use rustdns::{Class, Message, Resource, Type};
-use std::net::{IpAddr, SocketAddr, UdpSocket};
-use std::str::FromStr;
-use std::time::Duration;
+use std::{
+    net::{IpAddr, SocketAddr, UdpSocket},
+    str::FromStr,
+    time::Duration,
+};
 
 /// Creates code to add a question for a specific record_type to a given message with a domain
 macro_rules! message_question {
@@ -88,15 +91,38 @@ fn domain_lookup_individual(domain: &str, port: u16, dns_server: IpAddr) -> Resu
     domain_lookup_inner(&socket, domain, port)
 }
 
-/// looks up ip address for a given domain and port, checking SRV, CNAME and A records (in that order)
-pub fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
-    crate::DNS_SERVERS
+/// looks up ip address for a given domain and port, checking SRV, CNAME and A records (in that order),
+/// while using the DNS servers specified
+fn domain_lookup_with_servers(
+    domain: &str,
+    port: u16,
+    dns_servers: &[IpAddr],
+) -> Result<(IpAddr, u16)> {
+    dns_servers
         .iter()
-        .chain(["1.1.1.1".parse().unwrap(), "1.0.0.1".parse().unwrap()].iter())
         .filter_map(|dns_server| {
             info!("checking with DNS server {dns_server}");
             domain_lookup_individual(domain, port, *dns_server).ok()
         })
         .next()
         .ok_or(anyhow!("no valid records on any DNS servers"))
+}
+
+/// looks up ip address for a given domain and port, checking SRV, CNAME and A records (in that order)
+pub fn domain_lookup(domain: &str, port: u16) -> Result<(IpAddr, u16)> {
+    lazy_static! {
+        static ref DEFAULT_DNS_SERVERS: Vec<IpAddr> =
+            vec!["1.1.1.1".parse().unwrap(), "1.0.0.1".parse().unwrap()];
+    }
+
+    if let Ok(result) = domain_lookup_with_servers(domain, port, &crate::DNS_SERVERS) {
+        // first try with servers from OS
+        info!("successfully found ip address using OS dns servers");
+
+        Ok(result)
+    } else {
+        info!("trying default DNS servers `{:?}`", *DEFAULT_DNS_SERVERS);
+        // then just return result of using default servers
+        domain_lookup_with_servers(domain, port, &DEFAULT_DNS_SERVERS)
+    }
 }
