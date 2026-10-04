@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 dotenvy = "0.15.7"
 gamedig = { version = "0.4.0", features = [ "serde" ] }
-anyhow = "1.0.75"
+anyhow = "1.0.104"
 parse_duration = "2.1.1"
 log = "0.4.20"
 simple_logger = "4.2.0"
