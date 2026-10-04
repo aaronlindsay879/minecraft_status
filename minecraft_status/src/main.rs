@@ -24,7 +24,7 @@ type Status = Arc<RwLock<HashMap<String, Option<JavaResponse>>>>;
 #[tokio::main]
 async fn main() -> Result<()> {
     // read env file and init logger with default warn level
-    dotenvy::dotenv()?;
+    let _ = dotenvy::dotenv();
     simple_logger::SimpleLogger::new()
         .with_level(LevelFilter::Warn)
         .env()
